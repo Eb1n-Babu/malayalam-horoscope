@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './App.css'; // Import the external CSS
 
 const zodiacSigns = [
     { en: 'Aries', ml: 'മേടം (Mēṭaṁ)' },
@@ -35,35 +36,38 @@ const App = () => {
             const response = await axios.get('https://api.vedicastroapi.com/v1/horoscope/daily', {
                 params: {
                     sign: selectedSign,
-                    lang: 'ml', // Malayalam language
-                    api_key: '9b0c4550-0451-5550-b163-91a41c95c546', // Your provided API key
+                    lang: 'ml',
+                    api_key: import.meta.env.VITE_API_KEY,
                 },
             });
-            console.log('API Response:', response.data); // Debugging log
+
             if (response.data.status === 'success') {
                 setHoroscope(response.data.data);
             } else {
                 setError('Horoscope data not available: ' + (response.data.message || 'Unknown error'));
             }
         } catch (err) {
-            console.error('API Error:', err.response ? err.response.data : err.message); // Detailed error logging
-            setError('Error fetching horoscope: ' + (err.response?.data?.message || err.message));
+            if (err.response) {
+                setError(`സെർവർ പിഴവ്: ${err.response.data.message || err.response.statusText}`);
+            } else if (err.request) {
+                setError('ജാലകത്തിൽ നിന്ന് പ്രതികരണം ലഭിച്ചില്ല. നെറ്റ്‌വർക്ക് അല്ലെങ്കിൽ CORS പ്രശ്നങ്ങൾ പരിശോധിക്കുക.');
+            } else {
+                setError('അഭ്യർത്ഥന ക്രമീകരിക്കുന്നതിൽ പിഴവ്: ' + err.message);
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    // Debugging: Log component rendering
-    console.log('App.jsx: Rendering, selectedSign:', selectedSign, 'horoscope:', horoscope);
-
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-                <h1 className="text-2xl font-bold text-center mb-4">മലയാളം ജാതകം</h1>
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">നിന്റെ രാശി തിരഞ്ഞെടുക്കുക:</label>
+        <div className="app-container">
+            <div className="card">
+                <h1 className="title">മലയാളം ജാതകം</h1>
+
+                <div className="form-group">
+                    <label className="label">നിന്റെ രാശി തിരഞ്ഞെടുക്കുക:</label>
                     <select
-                        className="w-full p-2 border rounded"
+                        className="select"
                         value={selectedSign}
                         onChange={(e) => setSelectedSign(e.target.value)}
                     >
@@ -73,18 +77,25 @@ const App = () => {
                         ))}
                     </select>
                 </div>
+
                 <button
                     onClick={fetchHoroscope}
-                    className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                    className="button"
                     disabled={loading}
                 >
                     {loading ? 'ലോഡിംഗ്...' : 'ജാതകം കാണുക'}
                 </button>
-                {error && <p className="text-red-500 mt-4">{error}</p>}
+
+                {error && <p className="error">{error}</p>}
+
                 {horoscope && (
-                    <div className="mt-6">
-                        <h2 className="text-xl font-semibold">{zodiacSigns.find((s) => s.en === selectedSign)?.ml || 'Unknown Sign'}</h2>
-                        <p className="mt-2 text-gray-600">{horoscope.prediction || 'No prediction available'}</p>
+                    <div className="result">
+                        <h2 className="result-title">
+                            {zodiacSigns.find((s) => s.en === selectedSign)?.ml || 'Unknown Sign'}
+                        </h2>
+                        <p className="prediction">
+                            {horoscope.prediction || 'Prediction not available'}
+                        </p>
                     </div>
                 )}
             </div>
