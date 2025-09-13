@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './App.css'; // Import the external CSS
+import './App.css'; // External CSS
 
 const zodiacSigns = [
     { en: 'Aries', ml: 'മേടം (Mēṭaṁ)' },
     { en: 'Taurus', ml: 'ഇടവം (Iṭavaṁ)' },
     { en: 'Gemini', ml: 'മിഥുനം (Mithunaṁ)' },
     { en: 'Cancer', ml: 'കർക്കടകം (Karkaṭakaṁ)' },
-    { en: 'Leo', ml: 'ചിങ্ঙം (Ciṅṅaṁ)' },
+    { en: 'Leo', ml: 'ചിങ്ങം (Ciṅṅaṁ)' },
     { en: 'Virgo', ml: 'കന്നി (Kanni)' },
     { en: 'Libra', ml: 'തുലാം (Tulāṁ)' },
     { en: 'Scorpio', ml: 'വൃശ്ചികം (Vr̥ścikaṁ)' },
@@ -23,7 +23,11 @@ const App = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    console.log('API Key:', import.meta.env.VITE_API_KEY); // Log API key
+
     const fetchHoroscope = async () => {
+        console.log('Selected Sign:', selectedSign); // Log selected sign
+        console.log('Request Params:', { sign: selectedSign, lang: 'ml', api_key: import.meta.env.VITE_API_KEY }); // Log params
         if (!selectedSign) {
             setError('ദയവായി ഒരു രാശി തിരഞ്ഞെടുക്കുക');
             return;
@@ -33,20 +37,24 @@ const App = () => {
         setError(null);
 
         try {
-            const response = await axios.get('https://api.vedicastroapi.com/v1/horoscope/daily', {
+            const response = await axios.get('/api/v1/horoscope/daily', {
                 params: {
                     sign: selectedSign,
                     lang: 'ml',
                     api_key: import.meta.env.VITE_API_KEY,
                 },
+                timeout: 10000,
             });
+
+            console.log('API Response:', response.data); // Log full response
 
             if (response.data.status === 'success') {
                 setHoroscope(response.data.data);
             } else {
-                setError('Horoscope data not available: ' + (response.data.message || 'Unknown error'));
+                setError('ജാതക വിവരങ്ങൾ ലഭ്യമല്ല: ' + (response.data.message || 'അജ്ഞാത പിഴവ്'));
             }
         } catch (err) {
+            console.error('Error Details:', err); // Log detailed error
             if (err.response) {
                 setError(`സെർവർ പിഴവ്: ${err.response.data.message || err.response.statusText}`);
             } else if (err.request) {
@@ -91,10 +99,10 @@ const App = () => {
                 {horoscope && (
                     <div className="result">
                         <h2 className="result-title">
-                            {zodiacSigns.find((s) => s.en === selectedSign)?.ml || 'Unknown Sign'}
+                            {zodiacSigns.find((s) => s.en === selectedSign)?.ml || 'അജ്ഞാത രാശി'}
                         </h2>
                         <p className="prediction">
-                            {horoscope.prediction || 'Prediction not available'}
+                            {horoscope.prediction || 'ജാതക പ്രവചനം ലഭ്യമല്ല'}
                         </p>
                     </div>
                 )}
